@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prompt Builder PRO+</title>
+<style>
+  body{margin:0;font-family:system-ui;background:#f2f2f2}
+  .container{display:flex;height:100vh}
+
+  /* LEFT */
+  .left{width:70%;padding:12px;margin-right:30%;overflow:auto}
+
+  /* RIGHT */
+  .right{
+    width:30%;
+    background:#111;color:#0f0;
+    padding:12px;
+    position:fixed;right:0;top:0;height:100%;
+    display:flex;flex-direction:column;gap:8px;
+  }
+
+  /* TOP BAR */
+  .topbar{
+    display:flex;gap:6px;margin-bottom:12px;
+    position:sticky;top:0;background:#f2f2f2;z-index:10
+  }
+
+  .btn-blue{background:#007bff;color:#fff}
+  .btn-purple{background:#6f42c1;color:#fff}
+  .btn-green{background:#28a745;color:#fff}
+  .btn-orange{background:#fd7e14;color:#fff}
+
+  /* CARD */
+  .card{
+    background:#fff;border-radius:10px;padding:12px;margin-bottom:12px;
+    border-left:5px solid #ddd;
+  }
+  .card.active{border-left:5px solid #28a745;box-shadow:0 0 0 2px #28a74533}
+
+  h2{margin:0 0 6px 0;font-size:16px}
+  label{font-size:13px;color:#333}
+
+  select,input,textarea,button{
+    width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #ccc;
+    box-sizing:border-box;
+  }
+
+  .row{display:flex;gap:6px;margin-top:6px}
+  .add{background:#28a745;color:#fff;border:none}
+  .del{background:#dc3545;color:#fff;border:none;flex:0.5}
+  .copy{background:#6c757d;color:#fff;border:none}
+  .send{background:#0d6efd;color:#fff;border:none}
+  .send:disabled{opacity:.6;cursor:not-allowed}
+
+  .output{
+    height:auto;min-height:140px;flex:1;
+    background:#000;color:#0f0;font-family:monospace;
+  }
+
+  .log{
+    margin-top:0;background:#000;color:#0f0;font-size:12px;
+    padding:6px;height:140px;overflow:auto;border-radius:6px;
+  }
+
+  .preview{
+    width:100%;
+    max-height:180px;
+    object-fit:contain;
+    margin-top:6px;
+    border-radius:8px;
+    display:none;
+    border:1px solid #e5e5e5;
+    background:#fafafa;
+  }
+
+  .hint{
+    font-size:12px;color:#666;margin-top:6px;line-height:1.3
+  }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <!-- LEFT -->
+  <div class="left">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <button class="btn-blue" onclick="modeImage()">🖼 ภาพ</button>
+      <button class="btn-purple" onclick="modeWork()">🧩 งาน</button>
+      <button class="btn-green" onclick="modeVoice()">🎤 เสียง</button>
+      <button class="btn-orange" onclick="modeSub()">✍️ ซับ</button>
+    </div>
+
+    <!-- IMAGE REFERENCES -->
+    <div class="card">
+      <h2>🖼 รูปอ้างอิง</h2>
+
+      <label>รูปที่ 1: ภาพสินค้า (img1)</label>
+      <input type="file" id="img1" accept="image/*" />
+      <img id="preview1" class="preview" alt="preview1" />
+
+      <label style="display:block;margin-top:10px;">รูปที่ 2: รายละเอียดสินค้า (img2) — ใช้กับเมนู “งาน” ได้</label>
+      <input type="file" id="img2" accept="image/*" />
+      <img id="preview2" class="preview" alt="preview2" />
+
+      <div class="hint">
+        * เมนู “งาน”: ส่ง soraPrompt (+img1/img2 ถ้ามี) เพื่อแปลงเป็น Sora video prompt<br>
+        * เมนู “ภาพ”: ใช้เฉพาะ img1 + soraPrompt เพื่อเจนภาพโฆษณา 9:16
+      </div>
+    </div>
+
+    <!-- PRESET SORA -->
+    <div class="card">
+      <h2>🎬 Preset Sora</h2>
+      <select id="presetSora" onchange="loadPreset()"></select>
+      <input id="presetName" placeholder="ชื่อ Preset" />
+      <textarea id="presetText" rows="4" placeholder="รายละเอียด Preset"></textarea>
+      <div class="row">
+        <button class="add" onclick="savePreset()">💾 บันทึก</button>
+        <button class="del" onclick="deletePreset()">🗑 ลบ</button>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <div id="menu"></div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <h2>📄 Sora Prompt</h2>
+    <textarea id="result" class="output" readonly></textarea>
+
+    <div class="row">
+      <button class="copy" onclick="copySora()">📋 Copy (Sora Prompt)</button>
+      <button id="sendBtn" class="send" onclick="sendGPT()">🚀 Send GPT</button>
+    </div>
+
+    <hr style="margin:6px 0;border-color:#333" />
+
+    <h2>🤖 GPT Prompt</h2>
+    <textarea id="gptPrompt" class="output" readonly></textarea>
+    <button class="copy" onclick="copyGPT()">📋 Copy (GPT Prompt)</button>
+
+    <!-- ✅ IMAGE OUTPUT (ใต้ GPT Prompt) -->
+    <button id="genImgBtn" class="send" onclick="generateImage()">🎨 Generate Image</button>
+
+    <img id="genPreview" class="preview" alt="generated" style="display:none;margin-top:8px;max-height:260px;" />
+
+    <a id="downloadLink"
+       class="copy"
+       style="display:none;text-align:center;text-decoration:none;margin-top:6px;padding:10px;border-radius:8px;"
+       download="generated.png">
+      ⬇️ Download Image
+    </a>
+
+    <div class="log" id="log">> Ready<br></div>
+
+  </div>
+
+</div>
+
+<script>
+/** =========================
+ * CONFIG
+ * ========================= */
+const GPT_API_URL   = "https://gpt-backend-xm93.onrender.com/api/generate-gpt-prompt";
+const IMAGE_API_URL = "https://gpt-backend-xm93.onrender.com/api/generate-image";
+
+/** =========================
+ * STORAGE + ELEMENTS
+ * ========================= */
+const LS = "PROMPT_BUILDER_DATA";
+const LS_PRESET = "SORA_PRESETS";
+
+const presetSora = document.getElementById("presetSora");
+const presetName = document.getElementById("presetName");
+const presetText = document.getElementById("presetText");
+const result = document.getElementById("result");
+const logBox = document.getElementById("log");
+const gptBox = document.getElementById("gptPrompt");
+
+/** =========================
+ * LOG
+ * ========================= */
+function log(msg){
+  logBox.innerHTML += `> ${escapeHtml(String(msg))}<br>`;
+  logBox.scrollTop = logBox.scrollHeight;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[m]));
+}
+
+/** =========================
+ * IMAGE PREVIEW (upload preview)
+ * ========================= */
+function setupPreview(inputId, previewId){
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if(!file){
+      preview.style.display = "none";
+      preview.src = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  });
+}
+setupPreview("img1", "preview1");
+setupPreview("img2", "preview2");
+
+/** =========================
+ * SORA PRESETS
+ * ========================= */
+let soraPresets = JSON.parse(localStorage.getItem(LS_PRESET)) || {
+  ugc:{
+    name:"UGC รีวิวสินค้า",
+    text:[
+      "A vertical 9:16 UGC-style video.",
+      "A real customer casually reviewing the product.",
+      "Natural lighting, handheld camera, slight camera movement.",
+      "Soft daylight, cozy atmosphere.",
+      "Realistic skin texture, authentic facial expressions.",
+      "15 seconds.",
+      "High quality, cinematic but natural.",
+      "Optimized for TikTok."
+    ].join("\n")
+  }
+};
+
+function renderPresets(){
+  presetSora.innerHTML = "";
+  Object.keys(soraPresets).forEach(k=>{
+    const o=document.createElement("option");
+    o.value=k;
+    o.textContent=soraPresets[k].name;
+    presetSora.appendChild(o);
+  });
+  loadPreset();
+}
+
+function loadPreset(){
+  const p = soraPresets[presetSora.value];
+  if(!p) return;
+  presetName.value = p.name;
+  presetText.value = p.text;
+  update();
+}
+
+function savePreset(){
+  if(!presetName.value) return alert("กรอกชื่อ Preset");
+  const k = presetName.value.toLowerCase().replace(/\s+/g,"_");
+  soraPresets[k] = { name: presetName.value, text: presetText.value };
+  localStorage.setItem(LS_PRESET, JSON.stringify(soraPresets));
+  renderPresets();
+  presetSora.value = k;
+}
+
+function deletePreset(){
+  if(!confirm("ยืนยันการลบ Preset นี้ ?")) return;
+  delete soraPresets[presetSora.value];
+  localStorage.setItem(LS_PRESET, JSON.stringify(soraPresets));
+  renderPresets();
+}
+
+/** =========================
+ * DATA SECTIONS (LEFT MENU)
+ * ========================= */
+let data = JSON.parse(localStorage.getItem(LS)) || {
+  image:{enabled:false,items:["แต่งภาพ 9:16"]},
+  product:{enabled:false,items:["ท็อปเปอร์"]},
+  work:{enabled:false,items:["UGC รีวิว"]},
+  model:{enabled:false,items:["นางแบบเอเชีย"]},
+  style:{enabled:false,items:["Luxury"]},
+  mood:{enabled:false,items:["อบอุ่น"]},
+  voice:{enabled:false,items:["เสียงผู้หญิง"]},
+  subtitle:{enabled:false,items:["ซับขาย"]}
+};
+
+function save(){ localStorage.setItem(LS, JSON.stringify(data)); }
+
+function section(title,key){
+  const c = data[key];
+  if(!c.enabled) return "";
+  return `
+  <div class="card active" id="sec-${key}">
+    <h2>${title}</h2>
+    <select id="${key}_s" onchange="update()">
+      ${c.items.map(v=>`<option>${escapeHtml(v)}</option>`).join("")}
+    </select>
+    <input id="${key}_i" placeholder="เพิ่ม / แก้ไข">
+    <div class="row">
+      <button class="add" onclick="add('${key}')">➕ เพิ่ม</button>
+      <button class="del" onclick="delItem('${key}')">🗑 ลบ</button>
+    </div>
+  </div>`;
+}
+
+function render(){
+  document.getElementById("menu").innerHTML =
+    section("🖼 หมวดสร้างภาพ","image")+
+    section("📦 หมวดสินค้า","product")+
+    section("🧠 ประเภทงาน","work")+
+    section("👤 นายแบบ / นางแบบ","model")+
+    section("🎬 สไตล์ VDO","style")+
+    section("🌤 บรรยากาศ","mood")+
+    section("🎤 เสียงพากย์","voice")+
+    section("✍️ สร้างซับไตเติล","subtitle");
+  update();
+}
+
+function add(k){
+  const i=document.getElementById(k+"_i");
+  if(!i.value) return;
+  data[k].items.push(i.value);
+  i.value="";
+  save();
+  render();
+}
+
+function delItem(k){
+  const s=document.getElementById(k+"_s");
+  if(!s) return;
+  if(!confirm(`ยืนยันการลบ "${s.value}" ?`)) return;
+  data[k].items.splice(s.selectedIndex,1);
+  save();
+  render();
+}
+
+function line(t,k){
+  if(!data[k].enabled) return "";
+  const s=document.getElementById(k+"_s");
+  return s ? `${t}: ${s.value}\n` : "";
+}
+
+/** =========================
+ * BUILD SORA PROMPT
+ * ========================= */
+function update(){
+  const p = soraPresets[presetSora.value];
+  result.value =
+`###  ###
+${p ? p.text : ""}
+
+### DETAIL ###
+${line("ช่วยสร้างภาพ (Output ออกมาเป็นไฟล์ภาพเลย) รายละเอียดดังนี้","image")}
+${line("สินค้า","product")}
+${line("ประเภทงาน","work")}
+${line("นายแบบ/นางแบบ","model")}
+${line("สไตล์","style")}
+${line("บรรยากาศ","mood")}
+${line("เสียงพากย์","voice")}
+${line("ซับ","subtitle")}`.trim();
+}
+
+/** =========================
+ * MODES (toggle buttons)
+ * ========================= */
+function setModeUI(mode){
+  const sendBtn = document.getElementById("sendBtn");
+  const genBtn  = document.getElementById("genImgBtn");
+
+  if(mode === "image"){
+    sendBtn.style.display = "none";
+    genBtn.style.display  = "block";
+  }else{
+    sendBtn.style.display = "block";
+    genBtn.style.display  = "none";
+  }
+}
+
+function resetAll(){ Object.keys(data).forEach(k=>data[k].enabled=false); }
+
+function modeImage(){
+  resetAll();
+  ["product","image"].forEach(k=>data[k].enabled=true);
+  save(); render();
+  setModeUI("image");
+}
+
+function modeWork(){
+  resetAll();
+  ["product","work","model","style","mood"].forEach(k=>data[k].enabled=true);
+  save(); render();
+  setModeUI("work");
+}
+
+function modeVoice(){
+  resetAll();
+  ["product","voice"].forEach(k=>data[k].enabled=true);
+  save(); render();
+  setModeUI("work");
+}
+
+function modeSub(){
+  resetAll();
+  ["product","subtitle"].forEach(k=>data[k].enabled=true);
+  save(); render();
+  setModeUI("work");
+}
+
+/** =========================
+ * COPY
+ * ========================= */
+async function copySora(){
+  try{
+    await navigator.clipboard.writeText(result.value || "");
+    log("Copy Sora Prompt สำเร็จ");
+  }catch{
+    result.select();
+    document.execCommand("copy");
+    log("Copy Sora Prompt สำเร็จ (fallback)");
+  }
+}
+async function copyGPT(){
+  try{
+    await navigator.clipboard.writeText(gptBox.value || "");
+    log("Copy GPT Prompt สำเร็จ");
+  }catch{
+    gptBox.select();
+    document.execCommand("copy");
+    log("Copy GPT Prompt สำเร็จ (fallback)");
+  }
+}
+
+/** =========================
+ * SEND GPT (งาน) -> /api/generate-gpt-prompt
+ * ========================= */
+async function sendGPT(){
+  const sendBtn = document.getElementById("sendBtn");
+  sendBtn.disabled = true;
+
+  const soraPrompt = (result.value || "").trim();
+  if(!soraPrompt){
+    log("❌ Sora Prompt ว่าง");
+    sendBtn.disabled = false;
+    return;
+  }
+
+  const img1 = document.getElementById("img1")?.files?.[0] || null;
+  const img2 = document.getElementById("img2")?.files?.[0] || null;
+
+  const formData = new FormData();
+  formData.append("soraPrompt", soraPrompt);
+  if(img1) formData.append("img1", img1);
+  if(img2) formData.append("img2", img2);
+
+  log("🚀 Sending to GPT API...");
+
+  try{
+    const res = await fetch(GPT_API_URL, { method:"POST", body: formData });
+
+    if(res.status === 429){
+      log("⚠️ API จำกัดการใช้งาน (HTTP 429) — รอ 30–60 วินาที แล้วลองใหม่");
+      return;
+    }
+
+    if(!res.ok){
+      const text = await res.text().catch(()=> "");
+      log(`❌ API Error: HTTP ${res.status}${text ? " | " + text.slice(0,200) : ""}`);
+      return;
+    }
+
+    const payload = await res.json();
+    const prompt = payload?.prompt || payload?.data?.prompt || "";
+
+    if(!String(prompt).trim()){
+      log("❌ API ตอบกลับมา แต่ไม่พบ prompt");
+      return;
+    }
+
+    gptBox.value = String(prompt).trim();
+    log("✅ ได้ GPT Prompt แล้ว");
+  }catch(err){
+    console.error(err);
+    log("❌ Fetch failed: " + (err?.message || err));
+    log("🔎 เช็กว่า URL ถูก + Backend Live + CORS อนุญาต github.io แล้ว");
+  }finally{
+    sendBtn.disabled = false;
+  }
+}
+
+/** =========================
+ * GENERATE IMAGE (ภาพ) -> /api/generate-image
+ * ใช้เฉพาะ img1 + soraPrompt
+ * ========================= */
+async function generateImage(){
+  const btn = document.getElementById("genImgBtn");
+  btn.disabled = true;
+
+  const soraPrompt = (result.value || "").trim();
+  const img1 = document.getElementById("img1")?.files?.[0] || null;
+
+  if(!img1){
+    log("❌ กรุณาอัปโหลดรูปสินค้า (img1) ก่อน");
+    btn.disabled = false;
+    return;
+  }
+  if(!soraPrompt){
+    log("❌ Sora Prompt ว่าง");
+    btn.disabled = false;
+    return;
+  }
+
+  const form = new FormData();
+  form.append("soraPrompt", soraPrompt);
+  form.append("img1", img1);
+
+  log("🖼 Generating image...");
+
+  try{
+    const res = await fetch(IMAGE_API_URL, { method:"POST", body: form });
+
+    if(res.status === 429){
+      log("⚠️ HTTP 429: โควต้าหรือเรทลิมิต — รอ 30–60 วิ แล้วลองใหม่");
+      return;
+    }
+
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      log(`❌ Image API Error: HTTP ${res.status} | ${t.slice(0,300)}`);
+      return;
+    }
+
+    const payload = await res.json();
+    if(!payload?.success || !payload?.b64){
+      log("❌ API ตอบกลับมา แต่ไม่มีรูป (missing b64)");
+      return;
+    }
+
+    const mime = payload.mime || "image/png";
+    const dataUrl = `data:${mime};base64,${payload.b64}`;
+
+    const img = document.getElementById("genPreview");
+    const dl  = document.getElementById("downloadLink");
+
+    img.src = dataUrl;
+    img.style.display = "block";
+
+    dl.href = dataUrl;
+    dl.style.display = "block";
+    dl.download = payload.filename || "generated.png";
+
+    log("✅ ได้รูปแล้ว (แสดงใต้ GPT Prompt) และดาวน์โหลดได้");
+  }catch(err){
+    console.error(err);
+    log("❌ Generate image failed: " + (err?.message || err));
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/** =========================
+ * INIT
+ * ========================= */
+renderPresets();
+render();
+setModeUI("work"); // ค่าเริ่มต้น: ให้เห็น Send GPT และซ่อน Generate Image
+</script>
+</body>
+</html>
