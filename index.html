@@ -1,578 +1,602 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Prompt Builder PRO+</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Index PRO+ – TikTok Feed Intelligence</title>
+
 <style>
-  body{margin:0;font-family:system-ui;background:#f2f2f2}
-  .container{display:flex;height:100vh}
+body{margin:0;font-family:system-ui;background:#f1f5f9}
+header{background:#020617;color:#fff;padding:20px}
+.container{max-width:1500px;margin:auto;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.stat{font-size:30px;font-weight:900}
+.badge{padding:4px 10px;border-radius:20px;font-size:12px;background:#e5e7eb}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #eee}
+th{background:#f8fafc}
+.foi{font-size:22px;font-weight:900}
 
-  /* LEFT */
-  .left{width:70%;padding:12px;margin-right:30%;overflow:auto}
+button,input,select,textarea{
+  padding:10px;border-radius:10px;border:1px solid #cbd5f5;font-family:inherit
+}
+button{background:#020617;color:#fff;cursor:pointer}
+button.secondary{background:#475569}
+button.danger{background:#dc2626}
+textarea{width:100%;min-height:160px}
+small{color:#64748b}
+hr{border:none;border-top:1px solid #e5e7eb;margin:12px 0}
 
-  /* RIGHT */
-  .right{
-    width:30%;
-    background:#111;color:#0f0;
-    padding:12px;
-    position:fixed;right:0;top:0;height:100%;
-    display:flex;flex-direction:column;gap:8px;
-  }
+/* CATEGORY SCROLL */
+.cat-scroll{max-height:260px;overflow-y:auto;padding-right:6px}
+.cat-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 
-  /* TOP BAR */
-  .topbar{
-    display:flex;gap:6px;margin-bottom:12px;
-    position:sticky;top:0;background:#f2f2f2;z-index:10
-  }
+.thumb{
+  width:48px;
+  height:48px;
+  object-fit:cover;
+  border-radius:8px;
+  border:1px solid #e5e7eb;
+  cursor:pointer;
+  transition:.15s;
+}
 
-  .btn-blue{background:#007bff;color:#fff}
-  .btn-purple{background:#6f42c1;color:#fff}
-  .btn-green{background:#28a745;color:#fff}
-  .btn-orange{background:#fd7e14;color:#fff}
+.thumb:hover{
+  transform:scale(2);
+  z-index:10;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+}
 
-  /* CARD */
-  .card{
-    background:#fff;border-radius:10px;padding:12px;margin-bottom:12px;
-    border-left:5px solid #ddd;
-  }
-  .card.active{border-left:5px solid #28a745;box-shadow:0 0 0 2px #28a74533}
+/* ===== Kalodata Pagination ===== */
+.pagination{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.page-btn{
+  min-width:36px;
+  padding:6px 10px;
+  border-radius:8px;
+  border:1px solid #cbd5f5;
+  background:#fff;
+  cursor:pointer;
+  font-weight:600;
+  color:#020617; /* 👈 เพิ่มบรรทัดนี้ */
+}
 
-  h2{margin:0 0 6px 0;font-size:16px}
-  label{font-size:13px;color:#333}
+.page-btn.active{
+  background:#020617;
+  color:#fff; /* 👈 ระบุชัด */
+}
+.page-btn.active{
+  background:#020617;
+  color:#fff;
+}
+.page-btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+.page-info{
+  font-size:14px;
+  color:#64748b;
+}
+.product-btn{
+  display:inline-block;
+  padding:4px 10px;
+  font-size:12px;
+  font-weight:600;
+  border-radius:999px;
+  background:#ecfeff;
+  color:#0369a1;
+  border:1px solid #67e8f9;
+  text-decoration:none;
+}
+.product-btn:hover{
+  background:#cffafe;
+}
 
-  select,input,textarea,button{
-    width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #ccc;
-    box-sizing:border-box;
-  }
-
-  .row{display:flex;gap:6px;margin-top:6px}
-  .add{background:#28a745;color:#fff;border:none}
-  .del{background:#dc3545;color:#fff;border:none;flex:0.5}
-  .copy{background:#6c757d;color:#fff;border:none}
-  .send{background:#0d6efd;color:#fff;border:none}
-  .send:disabled{opacity:.6;cursor:not-allowed}
-
-  .output{
-    height:auto;min-height:140px;flex:1;
-    background:#000;color:#0f0;font-family:monospace;
-  }
-
-  .log{
-    margin-top:0;background:#000;color:#0f0;font-size:12px;
-    padding:6px;height:140px;overflow:auto;border-radius:6px;
-  }
-
-  .preview{
-    width:100%;
-    max-height:180px;
-    object-fit:contain;
-    margin-top:6px;
-    border-radius:8px;
-    display:none;
-    border:1px solid #e5e5e5;
-    background:#fafafa;
-  }
-
-  .hint{
-    font-size:12px;color:#666;margin-top:6px;line-height:1.3
-  }
 </style>
 </head>
 
 <body>
+
+<header>
+  <h1>🚀 Index PRO+ – Feed Opportunity Index</h1>
+  <small>Kalodata-style | Affiliate Intelligence | No API</small>
+</header>
+
 <div class="container">
 
-  <!-- LEFT -->
-  <div class="left">
+<!-- DASHBOARD -->
+<div class="grid">
+  <div class="card"><h3>📦 สินค้าทั้งหมด</h3><div class="stat" id="total">0</div></div>
+  <div class="card"><h3>🚀 FOI ≥ 75</h3><div class="stat" id="easy">0</div></div>
+  <div class="card"><h3>💰 ROI สูง</h3><div class="stat" id="roiHigh">0</div></div>
+  <div class="card"><h3>🔥 หมวดมาแรง</h3><div class="stat" id="topCat">-</div></div>
+</div>
 
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <button class="btn-blue" onclick="modeImage()">🖼 ภาพ</button>
-      <button class="btn-purple" onclick="modeWork()">🧩 งาน</button>
-      <button class="btn-green" onclick="modeVoice()">🎤 เสียง</button>
-      <button class="btn-orange" onclick="modeSub()">✍️ ซับ</button>
-    </div>
+<br>
 
-    <!-- IMAGE REFERENCES -->
-    <div class="card">
-      <h2>🖼 รูปอ้างอิง</h2>
+<!-- FILTER -->
+<div class="card">
+  <input id="search" placeholder="ค้นหาสินค้า">
+  <select id="catFilter"></select>
+  <button onclick="apply()">Filter</button>
+  <button class="secondary" onclick="exportCSV()">Export CSV</button>
+  <button class="secondary" onclick="selectPage()">☑️ ALL</button>
+  <button class="secondary" onclick="clearSelected()">❌ ล้างที่เลือก</button>
+  <button class="danger" onclick="clearData()">🧹 เคลียร์ข้อมูล</button>
+</div>
 
-      <label>รูปที่ 1: ภาพสินค้า (img1)</label>
-      <input type="file" id="img1" accept="image/*" />
-      <img id="preview1" class="preview" alt="preview1" />
+<br>
 
-      <label style="display:block;margin-top:10px;">รูปที่ 2: รายละเอียดสินค้า (img2) — ใช้กับเมนู “งาน” ได้</label>
-      <input type="file" id="img2" accept="image/*" />
-      <img id="preview2" class="preview" alt="preview2" />
+<!-- CATEGORY -->
+<div class="card">
+  <h3>🗂 จัดการหมวดหมู่</h3>
+  <input id="catName" placeholder="ชื่อหมวด">
+  <input id="catRegex" placeholder="Keyword / Regex">
+  <button onclick="addCategory()">➕ เพิ่มหมวด</button>
+  <hr>
+  <div id="catList" class="cat-scroll"></div>
+</div>
 
-      <div class="hint">
-        * เมนู “งาน”: ส่ง soraPrompt (+img1/img2 ถ้ามี) เพื่อแปลงเป็น Sora video prompt<br>
-        * เมนู “ภาพ”: ใช้เฉพาะ img1 + soraPrompt เพื่อเจนภาพโฆษณา 9:16
-      </div>
-    </div>
+<br>
 
-    <!-- PRESET SORA -->
-    <div class="card">
-      <h2>🎬 Preset Sora</h2>
-      <select id="presetSora" onchange="loadPreset()"></select>
-      <input id="presetName" placeholder="ชื่อ Preset" />
-      <textarea id="presetText" rows="4" placeholder="รายละเอียด Preset"></textarea>
-      <div class="row">
-        <button class="add" onclick="savePreset()">💾 บันทึก</button>
-        <button class="del" onclick="deletePreset()">🗑 ลบ</button>
-      </div>
-    </div>
+<!-- TABLE -->
+<div class="card">
+<table>
+<thead>
+<tr>
+  <th>เลือก</th>
+  <th>#</th>
+  <th>รูป</th>
+  <th>Name</th>
+  <th>ID</th>
+  <th>Link</th>
+</tr>
+</thead>
+<tbody id="tb"></tbody>
+</table>
 
-    <!-- MENU -->
-    <div id="menu"></div>
-
+<!-- Pagination -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+  <div class="pagination" id="pagination"></div>
+  <div class="page-info">
+    แสดง
+    <select id="pageSize" onchange="changePageSize()">
+      <option>20</option>
+      <option>50</option>
+      <option>100</option>
+    </select>
+    รายการ / หน้า
   </div>
+</div>
+</div>
 
-  <!-- RIGHT -->
-  <div class="right">
+<br>
 
-    <h2>📄 Sora Prompt</h2>
-    <textarea id="result" class="output" readonly></textarea>
-
-    <div class="row">
-      <button class="copy" onclick="copySora()">📋 Copy (Sora Prompt)</button>
-      <button id="sendBtn" class="send" onclick="sendGPT()">🚀 Send GPT</button>
-    </div>
-
-    <hr style="margin:6px 0;border-color:#333" />
-
-    <h2>🤖 GPT Prompt</h2>
-    <textarea id="gptPrompt" class="output" readonly></textarea>
-    <button class="copy" onclick="copyGPT()">📋 Copy (GPT Prompt)</button>
-
-    <!-- ✅ IMAGE OUTPUT (ใต้ GPT Prompt) -->
-    <button id="genImgBtn" class="send" onclick="generateImage()">🎨 Generate Image</button>
-
-    <img id="genPreview" class="preview" alt="generated" style="display:none;margin-top:8px;max-height:260px;" />
-
-    <a id="downloadLink"
-       class="copy"
-       style="display:none;text-align:center;text-decoration:none;margin-top:6px;padding:10px;border-radius:8px;"
-       download="generated.png">
-      ⬇️ Download Image
-    </a>
-
-    <div class="log" id="log">> Ready<br></div>
-
+<!-- GPT -->
+<div class="card">
+  <h3>🧠 Send to GPT</h3>
+  <textarea id="gptPrompt"></textarea>
+  <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+    <button onclick="sendToGPT()">📤 Copy Text</button>
+    <button class="secondary" onclick="exportGPTCSV()">⬇️ Export CSV</button>
   </div>
+</div>
 
 </div>
 
 <script>
-/** =========================
- * CONFIG
- * ========================= */
-const GPT_API_URL   = "https://gpt-backend-xm93.onrender.com/api/generate-gpt-prompt";
-const IMAGE_API_URL = "https://gpt-backend-xm93.onrender.com/api/generate-image";
+/* ================= CONFIG ================= */
+const DB_ROOT="https://tiktok2-58c4a-default-rtdb.asia-southeast1.firebasedatabase.app";
+const IMPORT_PATH="/imports.json";
 
-/** =========================
- * STORAGE + ELEMENTS
- * ========================= */
-const LS = "PROMPT_BUILDER_DATA";
-const LS_PRESET = "SORA_PRESETS";
-
-const presetSora = document.getElementById("presetSora");
-const presetName = document.getElementById("presetName");
-const presetText = document.getElementById("presetText");
-const result = document.getElementById("result");
-const logBox = document.getElementById("log");
-const gptBox = document.getElementById("gptPrompt");
-
-/** =========================
- * LOG
- * ========================= */
-function log(msg){
-  logBox.innerHTML += `> ${escapeHtml(String(msg))}<br>`;
-  logBox.scrollTop = logBox.scrollHeight;
-}
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[m]));
+/* ================= PRODUCT LINK ================= */
+function buildProductLink(p){
+  if(!p) return "";
+  const pid = (p.product_id || p.productId || p.id || p.pid || "").toString().replace(/[^\d]/g,"");
+  if(pid){
+    return `https://shop.tiktok.com/view/product/${pid}?region=TH&locale=th-TH&source=agency`;
+  }
+  return "";
 }
 
-/** =========================
- * IMAGE PREVIEW (upload preview)
- * ========================= */
-function setupPreview(inputId, previewId){
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
+/* ================= IMAGE LINK (HI-RES) ================= */
+function getHiResImage(url){
+  if(!url) return "";
+  return url.replace(/resize-jpeg:\d+:\d+/i, "resize-jpeg:800:800");
+}
 
-  input.addEventListener("change", () => {
-    const file = input.files && input.files[0];
-    if(!file){
-      preview.style.display = "none";
-      preview.src = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = e => {
-      preview.src = e.target.result;
-      preview.style.display = "block";
-    };
-    reader.readAsDataURL(file);
+/* ================= PAGINATION STATE ================= */
+let CURRENT_PAGE=1;
+let PAGE_SIZE=20;
+let FILTERED_DATA=[];
+
+/* ================= SELECT STATE ================= */
+const SELECT_KEY = "INDEX_PRO_SELECTED";
+let SELECTED = new Set(JSON.parse(localStorage.getItem(SELECT_KEY) || "[]"));
+
+function saveSelected(){
+  localStorage.setItem(SELECT_KEY, JSON.stringify([...SELECTED]));
+}
+
+/* ================= CATEGORY ================= */
+const CAT_PATH = "/categories.json";
+
+let CATEGORIES = [];
+let DATA=[];
+
+async function loadCategories(){
+  const r = await fetch(DB_ROOT + CAT_PATH);
+  const j = await r.json();
+  CATEGORIES = j
+  ? Object.entries(j).map(([id, c]) => ({ id, ...c }))
+  : [];
+  renderCatManager();
+}
+
+async function addCategory(){
+  if(!catName.value || !catRegex.value) return;
+
+  await fetch(DB_ROOT + "/categories.json",{
+    method:"POST",
+    body: JSON.stringify({
+      name: catName.value,
+      regex: catRegex.value
+    })
+  });
+
+  catName.value = catRegex.value = "";
+  await loadCategories();
+  reassignCategories();
+  saveProductsCategory();
+}
+
+async function removeCategory(id){
+  if(!confirm("⚠️ ต้องการลบหมวดหมู่นี้จริงหรือไม่?\nสินค้าที่อยู่ในหมวดนี้จะถูกจัดใหม่เป็น 'อื่นๆ'")){
+    return;
+  }
+
+  await fetch(DB_ROOT + "/categories/" + id + ".json", {
+    method: "DELETE"
+  });
+
+  await loadCategories();
+  reassignCategories();
+  saveProductsCategory();
+}
+
+/* ================= CATEGORY CRUD ================= */
+
+function renderCatManager(){
+  catList.innerHTML="";
+  CATEGORIES.forEach(c=>{
+    catList.innerHTML+=`
+      <div class="cat-item">
+        <div>
+          <b>${c.name}</b><br>
+          <small>${c.regex}</small>
+        </div>
+        <button class="danger" onclick="removeCategory('${c.id}')">
+          ลบ
+        </button>
+      </div>`;
   });
 }
-setupPreview("img1", "preview1");
-setupPreview("img2", "preview2");
 
-/** =========================
- * SORA PRESETS
- * ========================= */
-let soraPresets = JSON.parse(localStorage.getItem(LS_PRESET)) || {
-  ugc:{
-    name:"UGC รีวิวสินค้า",
-    text:[
-      "A vertical 9:16 UGC-style video.",
-      "A real customer casually reviewing the product.",
-      "Natural lighting, handheld camera, slight camera movement.",
-      "Soft daylight, cozy atmosphere.",
-      "Realistic skin texture, authentic facial expressions.",
-      "15 seconds.",
-      "High quality, cinematic but natural.",
-      "Optimized for TikTok."
-    ].join("\n")
-  }
-};
+function reassignCategories(){
+  DATA.forEach(p=>{
 
-function renderPresets(){
-  presetSora.innerHTML = "";
-  Object.keys(soraPresets).forEach(k=>{
-    const o=document.createElement("option");
-    o.value=k;
-    o.textContent=soraPresets[k].name;
-    presetSora.appendChild(o);
+    // 🛡️ กันพัง: ถ้าไม่มีชื่อสินค้า
+    if(!p || !p.name){
+      p.category = "อื่นๆ";
+      return;
+    }
+
+    const found = CATEGORIES.find(c=>{
+      try{
+        return new RegExp(c.regex,"i").test(p.name);
+      }catch(e){
+        return false;
+      }
+    });
+
+    p.category = found ? found.name : "อื่นๆ";
   });
-  loadPreset();
 }
 
-function loadPreset(){
-  const p = soraPresets[presetSora.value];
-  if(!p) return;
-  presetName.value = p.name;
-  presetText.value = p.text;
-  update();
-}
-
-function savePreset(){
-  if(!presetName.value) return alert("กรอกชื่อ Preset");
-  const k = presetName.value.toLowerCase().replace(/\s+/g,"_");
-  soraPresets[k] = { name: presetName.value, text: presetText.value };
-  localStorage.setItem(LS_PRESET, JSON.stringify(soraPresets));
-  renderPresets();
-  presetSora.value = k;
-}
-
-function deletePreset(){
-  if(!confirm("ยืนยันการลบ Preset นี้ ?")) return;
-  delete soraPresets[presetSora.value];
-  localStorage.setItem(LS_PRESET, JSON.stringify(soraPresets));
-  renderPresets();
-}
-
-/** =========================
- * DATA SECTIONS (LEFT MENU)
- * ========================= */
-let data = JSON.parse(localStorage.getItem(LS)) || {
-  image:{enabled:false,items:["แต่งภาพ 9:16"]},
-  product:{enabled:false,items:["ท็อปเปอร์"]},
-  work:{enabled:false,items:["UGC รีวิว"]},
-  model:{enabled:false,items:["นางแบบเอเชีย"]},
-  style:{enabled:false,items:["Luxury"]},
-  mood:{enabled:false,items:["อบอุ่น"]},
-  voice:{enabled:false,items:["เสียงผู้หญิง"]},
-  subtitle:{enabled:false,items:["ซับขาย"]}
-};
-
-function save(){ localStorage.setItem(LS, JSON.stringify(data)); }
-
-function section(title,key){
-  const c = data[key];
-  if(!c.enabled) return "";
-  return `
-  <div class="card active" id="sec-${key}">
-    <h2>${title}</h2>
-    <select id="${key}_s" onchange="update()">
-      ${c.items.map(v=>`<option>${escapeHtml(v)}</option>`).join("")}
-    </select>
-    <input id="${key}_i" placeholder="เพิ่ม / แก้ไข">
-    <div class="row">
-      <button class="add" onclick="add('${key}')">➕ เพิ่ม</button>
-      <button class="del" onclick="delItem('${key}')">🗑 ลบ</button>
-    </div>
-  </div>`;
-}
-
-function render(){
-  document.getElementById("menu").innerHTML =
-    section("🖼 หมวดสร้างภาพ","image")+
-    section("📦 หมวดสินค้า","product")+
-    section("🧠 ประเภทงาน","work")+
-    section("👤 นายแบบ / นางแบบ","model")+
-    section("🎬 สไตล์ VDO","style")+
-    section("🌤 บรรยากาศ","mood")+
-    section("🎤 เสียงพากย์","voice")+
-    section("✍️ สร้างซับไตเติล","subtitle");
-  update();
-}
-
-function add(k){
-  const i=document.getElementById(k+"_i");
-  if(!i.value) return;
-  data[k].items.push(i.value);
-  i.value="";
-  save();
-  render();
-}
-
-function delItem(k){
-  const s=document.getElementById(k+"_s");
-  if(!s) return;
-  if(!confirm(`ยืนยันการลบ "${s.value}" ?`)) return;
-  data[k].items.splice(s.selectedIndex,1);
-  save();
-  render();
-}
-
-function line(t,k){
-  if(!data[k].enabled) return "";
-  const s=document.getElementById(k+"_s");
-  return s ? `${t}: ${s.value}\n` : "";
-}
-
-/** =========================
- * BUILD SORA PROMPT
- * ========================= */
-function update(){
-  const p = soraPresets[presetSora.value];
-  result.value =
-`###  ###
-${p ? p.text : ""}
-
-### DETAIL ###
-${line("ช่วยสร้างภาพ (Output ออกมาเป็นไฟล์ภาพเลย) รายละเอียดดังนี้","image")}
-${line("สินค้า","product")}
-${line("ประเภทงาน","work")}
-${line("นายแบบ/นางแบบ","model")}
-${line("สไตล์","style")}
-${line("บรรยากาศ","mood")}
-${line("เสียงพากย์","voice")}
-${line("ซับ","subtitle")}`.trim();
-}
-
-/** =========================
- * MODES (toggle buttons)
- * ========================= */
-function setModeUI(mode){
-  const sendBtn = document.getElementById("sendBtn");
-  const genBtn  = document.getElementById("genImgBtn");
-
-  if(mode === "image"){
-    sendBtn.style.display = "none";
-    genBtn.style.display  = "block";
-  }else{
-    sendBtn.style.display = "block";
-    genBtn.style.display  = "none";
-  }
-}
-
-function resetAll(){ Object.keys(data).forEach(k=>data[k].enabled=false); }
-
-function modeImage(){
-  resetAll();
-  ["product","image"].forEach(k=>data[k].enabled=true);
-  save(); render();
-  setModeUI("image");
-}
-
-function modeWork(){
-  resetAll();
-  ["product","work","model","style","mood"].forEach(k=>data[k].enabled=true);
-  save(); render();
-  setModeUI("work");
-}
-
-function modeVoice(){
-  resetAll();
-  ["product","voice"].forEach(k=>data[k].enabled=true);
-  save(); render();
-  setModeUI("work");
-}
-
-function modeSub(){
-  resetAll();
-  ["product","subtitle"].forEach(k=>data[k].enabled=true);
-  save(); render();
-  setModeUI("work");
-}
-
-/** =========================
- * COPY
- * ========================= */
-async function copySora(){
-  try{
-    await navigator.clipboard.writeText(result.value || "");
-    log("Copy Sora Prompt สำเร็จ");
-  }catch{
-    result.select();
-    document.execCommand("copy");
-    log("Copy Sora Prompt สำเร็จ (fallback)");
-  }
-}
-async function copyGPT(){
-  try{
-    await navigator.clipboard.writeText(gptBox.value || "");
-    log("Copy GPT Prompt สำเร็จ");
-  }catch{
-    gptBox.select();
-    document.execCommand("copy");
-    log("Copy GPT Prompt สำเร็จ (fallback)");
-  }
-}
-
-/** =========================
- * SEND GPT (งาน) -> /api/generate-gpt-prompt
- * ========================= */
-async function sendGPT(){
-  const sendBtn = document.getElementById("sendBtn");
-  sendBtn.disabled = true;
-
-  const soraPrompt = (result.value || "").trim();
-  if(!soraPrompt){
-    log("❌ Sora Prompt ว่าง");
-    sendBtn.disabled = false;
-    return;
-  }
-
-  const img1 = document.getElementById("img1")?.files?.[0] || null;
-  const img2 = document.getElementById("img2")?.files?.[0] || null;
-
-  const formData = new FormData();
-  formData.append("soraPrompt", soraPrompt);
-  if(img1) formData.append("img1", img1);
-  if(img2) formData.append("img2", img2);
-
-  log("🚀 Sending to GPT API...");
-
-  try{
-    const res = await fetch(GPT_API_URL, { method:"POST", body: formData });
-
-    if(res.status === 429){
-      log("⚠️ API จำกัดการใช้งาน (HTTP 429) — รอ 30–60 วินาที แล้วลองใหม่");
-      return;
+async function saveProductsCategory(){
+  for(const batch of Object.entries(DATA_BY_BATCH)){
+    const [batchId, batchData] = batch;
+    for(const [i,p] of batchData.items.entries()){
+      await fetch(
+        `${DB_ROOT}/imports/${batchId}/items/${i}/category.json`,
+        { method:"PUT", body: JSON.stringify(p.category) }
+      );
     }
-
-    if(!res.ok){
-      const text = await res.text().catch(()=> "");
-      log(`❌ API Error: HTTP ${res.status}${text ? " | " + text.slice(0,200) : ""}`);
-      return;
-    }
-
-    const payload = await res.json();
-    const prompt = payload?.prompt || payload?.data?.prompt || "";
-
-    if(!String(prompt).trim()){
-      log("❌ API ตอบกลับมา แต่ไม่พบ prompt");
-      return;
-    }
-
-    gptBox.value = String(prompt).trim();
-    log("✅ ได้ GPT Prompt แล้ว");
-  }catch(err){
-    console.error(err);
-    log("❌ Fetch failed: " + (err?.message || err));
-    log("🔎 เช็กว่า URL ถูก + Backend Live + CORS อนุญาต github.io แล้ว");
-  }finally{
-    sendBtn.disabled = false;
   }
 }
 
-/** =========================
- * GENERATE IMAGE (ภาพ) -> /api/generate-image
- * ใช้เฉพาะ img1 + soraPrompt
- * ========================= */
-async function generateImage(){
-  const btn = document.getElementById("genImgBtn");
-  btn.disabled = true;
+/* ================= SCORE ================= */
+const sellScore=p=>Math.round((p.avgViews||0)/1000);
+const feedScore=p=>Math.round((p.engagement||0)*30);
+const FOI=p=>Math.min(100,Math.round(sellScore(p)*0.4+feedScore(p)*0.6));
+const roiScore=p=>Math.round(p.foi*0.7);
 
-  const soraPrompt = (result.value || "").trim();
-  const img1 = document.getElementById("img1")?.files?.[0] || null;
+/* ================= LOAD ================= */
+async function load(){
+  const r=await fetch(DB_ROOT+IMPORT_PATH);
+  const j=await r.json();
+  if(!j)return;
+  DATA=[];
+  
+  Object.values(j).forEach(b=>{
+    (b.items||[]).forEach(p=>{
 
-  if(!img1){
-    log("❌ กรุณาอัปโหลดรูปสินค้า (img1) ก่อน");
-    btn.disabled = false;
-    return;
-  }
-  if(!soraPrompt){
-    log("❌ Sora Prompt ว่าง");
-    btn.disabled = false;
-    return;
-  }
+  // normalize field
+  // Name (ข้อความ) + Product ID (ตัวเลขล้วน)
+  const rawId = (p.product_id || p.productId || p.id || p.pid || p.productID || "");
+  const pid = rawId ? rawId.toString().replace(/[^\d]/g,"") : "";
+  p.product_id = pid;
 
-  const form = new FormData();
-  form.append("soraPrompt", soraPrompt);
-  form.append("img1", img1);
+  p.name  = p.name || p.title || p.product_name || "-";
+  p.price = Number(p.price || 0) / 100;
+  p.stock = p.stock || p.inventory || 0;
 
-  log("🖼 Generating image...");
+  p.shop  = p.shop || "-";
+  p.sell  = sellScore(p);
+  p.feed  = feedScore(p);
+  p.foi   = FOI(p);
+  p.roi   = roiScore(p);
 
-  try{
-    const res = await fetch(IMAGE_API_URL, { method:"POST", body: form });
-
-    if(res.status === 429){
-      log("⚠️ HTTP 429: โควต้าหรือเรทลิมิต — รอ 30–60 วิ แล้วลองใหม่");
-      return;
-    }
-
-    if(!res.ok){
-      const t = await res.text().catch(()=> "");
-      log(`❌ Image API Error: HTTP ${res.status} | ${t.slice(0,300)}`);
-      return;
-    }
-
-    const payload = await res.json();
-    if(!payload?.success || !payload?.b64){
-      log("❌ API ตอบกลับมา แต่ไม่มีรูป (missing b64)");
-      return;
-    }
-
-    const mime = payload.mime || "image/png";
-    const dataUrl = `data:${mime};base64,${payload.b64}`;
-
-    const img = document.getElementById("genPreview");
-    const dl  = document.getElementById("downloadLink");
-
-    img.src = dataUrl;
-    img.style.display = "block";
-
-    dl.href = dataUrl;
-    dl.style.display = "block";
-    dl.download = payload.filename || "generated.png";
-
-    log("✅ ได้รูปแล้ว (แสดงใต้ GPT Prompt) และดาวน์โหลดได้");
-  }catch(err){
-    console.error(err);
-    log("❌ Generate image failed: " + (err?.message || err));
-  }finally{
-    btn.disabled = false;
-  }
+  DATA.push(p);
+});
+  });
+  reassignCategories(); // ✅ เพิ่มบรรทัดนี้
+  reload();
 }
 
-/** =========================
- * INIT
- * ========================= */
-renderPresets();
-render();
-setModeUI("work"); // ค่าเริ่มต้น: ให้เห็น Send GPT และซ่อน Generate Image
+/* ================= UI ================= */
+
+function renderPage(){
+  const start = (CURRENT_PAGE - 1) * PAGE_SIZE;
+  const pageData = FILTERED_DATA.slice(start, start + PAGE_SIZE);
+
+  render(pageData);
+  renderPagination();
+}
+function reload(){
+  dashboard();
+  filterCat();
+  FILTERED_DATA=[...DATA];
+  CURRENT_PAGE=1;
+  renderPage();
+  buildGPT();
+}
+function dashboard(){
+  total.innerText=DATA.length;
+  easy.innerText=DATA.filter(p=>p.foi>=75).length;
+  roiHigh.innerText=DATA.filter(p=>p.roi>=70).length;
+  const c={};DATA.forEach(p=>c[p.category]=(c[p.category]||0)+1);
+  topCat.innerText=Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0]||"-";
+}
+function filterCat(){
+  catFilter.innerHTML='<option value="">ทุกหมวด</option>';
+
+  [...new Set(
+    DATA
+      .filter(p=>p && p.category)
+      .map(p=>p.category)
+  )].forEach(c=>{
+    catFilter.innerHTML+=`<option>${c}</option>`;
+  });
+}
+function apply(){
+  const q=search.value.toLowerCase(),c=catFilter.value;
+  FILTERED_DATA=DATA.filter(p=>(!q||p.name.toLowerCase().includes(q))&&(!c||p.category===c));
+  CURRENT_PAGE=1;
+  renderPage();
+}
+
+/* ================= PRODUCT LINK HELPERS ================= */
+// STEP 2 — helper สร้าง Product Link (ใช้ตอน render)
+function buildProductLink(p){
+  if(!p) return "";
+
+  // กรณีมี product_id ตรง
+  if(p.name){
+    return `https://shop.tiktok.com/view/product/${p.product_id}?region=TH&locale=th-TH&source=agency`;
+  }
+
+  // fallback: ถ้ามี product_url เต็มอยู่แล้ว
+  if(p.product_url && p.product_url.startsWith("http")){
+    return p.product_url;
+  }
+
+  return "";
+}
+
+/* ================= RENDER ================= */
+function render(list){
+  tb.innerHTML = "";
+
+  list
+    .sort((a,b)=>b.foi-a.foi)
+    .forEach((p,i)=>{
+      const key = DATA.indexOf(p);
+      const checked = SELECTED.has(key) ? "checked" : "";
+      const productLink = buildProductLink(p);
+
+      tb.innerHTML += `
+<tr>
+  <!-- เลือก -->
+  <td>
+    <input type="checkbox" ${checked}
+      onchange="toggleSelect(${key})">
+  </td>
+
+  <!-- # -->
+  <td>#${(CURRENT_PAGE-1)*PAGE_SIZE+i+1}</td>
+
+  <!-- รูป -->
+  <td>
+    ${(() => {
+      const img = p.image || 'https://via.placeholder.com/80';
+      const hasReal = !!p.image;
+      const hi = hasReal ? getHiResImage(p.image) : '';
+      return `
+        <img class="thumb" src="${img}">
+        <div style="margin-top:6px">
+          ${hasReal ? `
+            <a href="${hi}" target="_blank" class="product-btn" style="font-size:11px;padding:3px 8px">
+              Open
+            </a>
+          ` : `<span style=\"color:#64748b;font-size:11px\">-</span>`}
+        </div>
+      `;
+    })()}
+  </td>
+
+  <!-- Name -->
+  <td>
+    <b>${p.name}</b>
+  </td>
+
+  <!-- ID -->
+  <td>
+    <code>${p.product_id || "-"}</code>
+  </td>
+
+  <!-- Product Link -->
+  <td>
+    ${productLink ? `
+      <a href="${productLink}" target="_blank" class="product-btn">
+        Link
+      </a>
+    ` : "-"}
+  </td>
+</tr>`;
+    });
+}
+
+function toggleSelect(key){
+  if(SELECTED.has(key)) SELECTED.delete(key);
+  else SELECTED.add(key);
+  saveSelected();
+  buildGPT();
+}
+
+/* ================= PAGINATION UI ================= */
+function renderPagination(){
+  const totalPages=Math.ceil(FILTERED_DATA.length/PAGE_SIZE);
+  if(totalPages<=1){pagination.innerHTML="";return;}
+  let html=`<button class="page-btn" ${CURRENT_PAGE===1?"disabled":""} onclick="gotoPage(${CURRENT_PAGE-1})">‹</button>`;
+  let start=Math.max(1,CURRENT_PAGE-2);
+  let end=Math.min(totalPages,start+4);
+  if(start>1)html+=`<button class="page-btn" onclick="gotoPage(1)">1</button>…`;
+  for(let i=start;i<=end;i++){
+    html+=`<button class="page-btn ${i===CURRENT_PAGE?"active":""}" onclick="gotoPage(${i})">${i}</button>`;
+  }
+  if(end<totalPages)html+=`…<button class="page-btn" onclick="gotoPage(${totalPages})">${totalPages}</button>`;
+  html+=`<button class="page-btn" ${CURRENT_PAGE===totalPages?"disabled":""} onclick="gotoPage(${CURRENT_PAGE+1})">›</button>`;
+  pagination.innerHTML=html;
+}
+function gotoPage(p){CURRENT_PAGE=p;renderPage();}
+function changePageSize(){PAGE_SIZE=parseInt(pageSize.value);CURRENT_PAGE=1;renderPage();}
+
+/* ================= SELECT ACTION ================= */
+function selectPage(){
+  const start = (CURRENT_PAGE - 1) * PAGE_SIZE;
+  const pageItems = FILTERED_DATA.slice(start, start + PAGE_SIZE);
+
+  pageItems.forEach(p=>{
+    const key = DATA.indexOf(p);
+    SELECTED.add(key);
+  });
+
+  saveSelected();
+  renderPage();
+  buildGPT();
+}
+
+/* ================= CLEAR SELECTED ================= */
+function clearSelected(){
+  if(!SELECTED.size) return;
+
+  if(!confirm("ล้างสินค้าที่เลือกทั้งหมด?")) return;
+
+  SELECTED.clear();          // ล้าง Set
+  saveSelected();            // sync localStorage
+  renderPage();              // refresh checkbox
+  buildGPT();                // refresh GPT text
+}
+
+function cleanForGPT(text){
+  return (text || "").replace(/ร้านค้าของคุณ/g, "").trim();
+}
+
+/* ================= GPT ================= */
+function cleanForGPT(text){
+  return (text || "").replace(/ร้านค้าของคุณ/g, "").trim();
+}
+
+function buildGPT(){
+  const list = SELECTED.size
+    ? [...SELECTED].map(i => DATA[i]).filter(Boolean)
+    : FILTERED_DATA.slice(0,10);
+
+  gptPrompt.value = list.map((p,i)=>
+    `${i+1}. ${cleanForGPT(p.name) || "-"} | link:${getHiResImage(p.image)} | ${p.product_id || 0}`
+  ).join("\n");
+}
+
+function exportGPTCSV(){
+  const list = SELECTED.size
+    ? [...SELECTED].map(i => DATA[i]).filter(Boolean)
+    : FILTERED_DATA.slice(0,10);
+
+  const headers = ["Title","ImageURL","ProductID"];
+  let csv = "\ufeff" + headers.join(",") + "\n";
+
+  list.forEach((p,i)=>{
+    const title = `${i+1}. ${cleanForGPT(p?.name) || "-"}`.replace(/"/g,'""');
+    const imageUrl = (p?.image ? getHiResImage(p.image) : "").replace(/"/g,'""');
+    const productId = (p?.product_id || "").toString().replace(/"/g,'""');
+
+    csv += `"${title}","${imageUrl}","${productId}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "output.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+/* ================= CLEAR ================= */
+async function clearData(){
+  if(!confirm("ลบข้อมูลทั้งหมด?"))return;
+  await fetch(DB_ROOT+IMPORT_PATH,{method:"DELETE"});
+  DATA=[];reload();
+}
+
+/* ================= INIT ================= */
+async function init(){
+  await loadCategories(); // โหลดหมวดก่อน
+  await load();           // แล้วค่อยโหลดสินค้า
+}
+
+init();
 </script>
+
 </body>
 </html>
